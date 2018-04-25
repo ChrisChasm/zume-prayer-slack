@@ -69,12 +69,16 @@ class Zume_Prayer_Slack
         if ( isset( $_POST['zume_prayer_slack_nonce'] ) && ! empty( $_POST['zume_prayer_slack_nonce'] )
             && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['zume_prayer_slack_nonce'] ) ), 'zume_prayer_slack'. get_current_user_id() ) ) {
             dt_write_log( $_POST );
+
             $hook_url = trim( sanitize_text_field( wp_unslash( $_POST['hook_url'] ) ) );
+            $channel = trim( sanitize_text_field( wp_unslash( $_POST['channel'] ) ) );
 
             update_option('zume_prayer_slack', $hook_url, true );
+            update_option('zume_prayer_slack_channel', $channel, true );
         }
 
         $hook_url = get_option( 'zume_prayer_slack' );
+        $channel = get_option( 'zume_prayer_slack_channel' );
 
         // begin columns template
         $this->template( 'begin' );
@@ -93,6 +97,10 @@ class Zume_Prayer_Slack
                 <td><input type="text" name="hook_url" value="<?php echo esc_attr( $hook_url ) ?>" class="regular-text" /></td>
             </tr>
             <tr>
+                <td><label>Channel</label></td>
+                <td><input type="text" name="channel" value="<?php echo esc_attr( $channel ) ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
                 <td colspan="2">
                     <button class="button" type="submit" style="float:right"><?php esc_html_e( 'Save' ) ?></button>
                 </td>
@@ -108,14 +116,9 @@ class Zume_Prayer_Slack
         $this->template( 'end' );
     }
 
-    public function select_auto_locations()
-    {
-
-    }
-
     public function hooks_user_register( $user_id ) {
-        $user = get_user_by('id', $user_id );
-        if ( ! $user ) {
+        $initials = $this->create_alias( $user_id );
+        if ( ! $initials ) {
             return;
         }
         $raw_ip_location = get_user_meta( $user_id, 'zume_raw_location_from_ip', true );
@@ -133,8 +136,8 @@ class Zume_Prayer_Slack
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $user->user_nicename . ( ! empty( $address ) ? ', from ' . $address . ',' : '' ) . " just joined Zúme",
-                    'channel'    => 'activity',
+                    'message'    => $initials . ( ! empty( $address ) ? ', from ' . $address . ',' : '' ) . " just joined Zúme",
+                    'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
                 ]
@@ -146,12 +149,13 @@ class Zume_Prayer_Slack
     }
 
     public function hooks_create_group( $user_id, $group_key, $new_group ) {
-        $user = get_user_by('id', $user_id );
-        $group = get_user_meta( $user_id, $group_key, true );
-        $title = '';
-        if ( ! $user ) {
+        $initials = $this->create_alias( $user_id );
+        if ( ! $initials ) {
             return;
         }
+
+        $group = get_user_meta( $user_id, $group_key, true );
+        $title = '';
         if ( $group ) {
             $title = $group['group_name'] ?? '';
         }
@@ -159,8 +163,8 @@ class Zume_Prayer_Slack
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $user->user_nicename . " created a new group" . ( ! empty( $title ) ? ' called '. $title .'' : ''),
-                    'channel'    => 'activity',
+                    'message'    => $initials . " created a new group" . ( ! empty( $title ) ? ' called '. $title .'' : ''),
+                    'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
                 ]
@@ -172,16 +176,16 @@ class Zume_Prayer_Slack
     }
 
     public function hooks_update_three_month_plan( $user_id, $plan ) {
-        $user = get_user_by('id', $user_id );
-        if ( ! $user ) {
+        $initials = $this->create_alias( $user_id );
+        if ( ! $initials ) {
             return;
         }
         try {
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $user->user_nicename . " is working on their 3 month plan.",
-                    'channel'    => 'activity',
+                    'message'    => $initials . " is working on their 3 month plan.",
+                    'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
                 ]
@@ -193,16 +197,16 @@ class Zume_Prayer_Slack
     }
 
     public function hooks_coleader_invitation_response( $user_id, $group_key, $decision ) {
-        $user = get_user_by('id', $user_id );
-        if ( ! $user ) {
+        $initials = $this->create_alias( $user_id );
+        if ( ! $initials ) {
             return;
         }
         try {
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $user->user_nicename . " " . $decision . " an invitation to join a group.",
-                    'channel'    => 'activity',
+                    'message'    => $initials . " " . $decision . " an invitation to join a group.",
+                    'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
                 ]
@@ -214,16 +218,16 @@ class Zume_Prayer_Slack
     }
 
     public function hooks_session_complete( $zume_group_key, $zume_session, $owner_id, $current_user_id ) {
-        $user = get_user_by('id', $current_user_id );
-        if ( ! $user ) {
+        $initials = $this->create_alias( $current_user_id );
+        if ( ! $initials ) {
             return;
         }
         try {
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $user->user_nicename . " is leading a group through session " . $zume_session . " right now!",
-                    'channel'    => 'activity',
+                    'message'    => $initials . " is leading a group through session " . $zume_session . " right now!",
+                    'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
                 ]
@@ -349,6 +353,26 @@ class Zume_Prayer_Slack
                 break;
         }
     }
+
+    public function create_alias( $user_id ) {
+        $user = get_user_by('id', $user_id );
+        if ( ! $user->exists() ) {
+            return 'User-' . $user_id;
+        }
+
+        $first_name = $user->__get('first_name' );
+        $last_name = $user->__get('last_name' );
+        if ( ! empty( $first_name ) ||  ! empty( $last_name ) ) {
+            $first_initial = empty( $first_name ) ? '' : substr( strtoupper( $first_name ), 0, 1 );
+            $last_initial = empty( $last_name ) ? '' : substr( strtoupper( $last_name ), 0, 1 );
+
+            $initials = $first_initial.$last_initial;
+            return $initials; // returns first and last initials
+        }
+
+        $login_initials = substr( strtoupper( $user->user_login ), 0, 2 );
+        return $login_initials; // returns first two letters of login name
+    }
 }
 
 /**
@@ -392,7 +416,7 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
             && $this->verify_async_nonce( sanitize_key( wp_unslash( $_POST[ '_nonce' ] ) ) ) ) {
 
             $message = $_POST[0]['message'] ?? '';
-            $channel = $_POST[0]['channel'] ?? '';
+            $channel = get_option( 'zume_prayer_slack_channel' ); // $channel = $_POST[0]['channel'] ?? '';
             $username = $_POST[0]['username'] ?? '';
             $icon_emoji = $_POST[0]['icon_emoji'] ?? '';
             // @codingStandardsIgnoreEnd
@@ -427,7 +451,7 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
                 )
             );
 
-            dt_write_log( $posting_to_slack );
+//            dt_write_log( $posting_to_slack );
 
         } // end if check
         return;
