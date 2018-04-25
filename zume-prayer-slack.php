@@ -4,8 +4,8 @@
 * Plugin URI: https://github.com/ChrisChasm/zume-prayer-slack
 * Author: Chasm Solutions
 * Author URI: https://chasm.solutions
-* Description:
-* Version: 1.1
+* Description: A support plugins to send Slack notifications to Zume Prayer Slack for key site events.
+* Version: 1.0
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
@@ -47,7 +47,6 @@ class Zume_Prayer_Slack
      */
     public function __construct()
     {
-
         add_action( "admin_menu", [ $this, "register_menu" ] );
 
         // hooks
@@ -63,10 +62,55 @@ class Zume_Prayer_Slack
         add_menu_page( __( 'Zume Prayer Slack' ), __( 'Zume Prayer Slack' ), 'manage_options', 'zume-prayer-slack', [ $this, 'content' ], 'dashicons-admin-generic', 59 );
     }
 
+    /**
+     * Options page
+     */
     public function content() {
+        if ( isset( $_POST['zume_prayer_slack_nonce'] ) && ! empty( $_POST['zume_prayer_slack_nonce'] )
+            && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['zume_prayer_slack_nonce'] ) ), 'zume_prayer_slack'. get_current_user_id() ) ) {
+            dt_write_log( $_POST );
+            $hook_url = trim( sanitize_text_field( wp_unslash( $_POST['hook_url'] ) ) );
+
+            update_option('zume_prayer_slack', $hook_url, true );
+        }
+
+        $hook_url = get_option( 'zume_prayer_slack' );
+
+        // begin columns template
+        $this->template( 'begin' );
+        // Build metabox
+        $this->box( 'top', 'Slack Hook', [
+            'col_span' => 2,
+            'row_container' => false
+        ] );
         ?>
-        Zume Prayer Slack
+        <h2>Zume Prayer Slack</h2>
+        <br>
+        <form method="post" action="">
+            <?php wp_nonce_field( 'zume_prayer_slack'. get_current_user_id(), 'zume_prayer_slack_nonce', false, true ) ?>
+            <tr>
+                <td><label>Zume Hook URL</label></td>
+                <td><input type="text" name="hook_url" value="<?php echo esc_attr( $hook_url ) ?>" class="regular-text" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button class="button" type="submit" style="float:right"><?php esc_html_e( 'Save' ) ?></button>
+                </td>
+            </tr>
+        </form>
+
         <?php
+        $this->box( 'bottom' );
+        // end metabox
+        // begin right column template
+        $this->template( 'right_column' );
+        // end columns template
+        $this->template( 'end' );
+    }
+
+    public function select_auto_locations()
+    {
+
     }
 
     public function hooks_user_register( $user_id ) {
@@ -97,7 +141,7 @@ class Zume_Prayer_Slack
             );
         } catch ( Exception $e ) {
             dt_write_log( '@' . __METHOD__ );
-            dt_write_log( 'Caught exception: ', $e->getMessage(), "\n" );
+            dt_write_log( 'Caught exception: '. $e->getMessage() . "\n" );
         }
     }
 
@@ -123,7 +167,7 @@ class Zume_Prayer_Slack
             );
         } catch ( Exception $e ) {
             dt_write_log( '@' . __METHOD__ );
-            dt_write_log( 'Caught exception: ', $e->getMessage(), "\n" );
+            dt_write_log( 'Caught exception: '. $e->getMessage() . "\n" );
         }
     }
 
@@ -144,7 +188,7 @@ class Zume_Prayer_Slack
             );
         } catch ( Exception $e ) {
             dt_write_log( '@' . __METHOD__ );
-            dt_write_log( 'Caught exception: ', $e->getMessage(), "\n" );
+            dt_write_log( 'Caught exception: '. $e->getMessage() . "\n" );
         }
     }
 
@@ -165,7 +209,7 @@ class Zume_Prayer_Slack
             );
         } catch ( Exception $e ) {
             dt_write_log( '@' . __METHOD__ );
-            dt_write_log( 'Caught exception: ', $e->getMessage(), "\n" );
+            dt_write_log( 'Caught exception: '. $e->getMessage() . "\n" );
         }
     }
 
@@ -186,7 +230,123 @@ class Zume_Prayer_Slack
             );
         } catch ( Exception $e ) {
             dt_write_log( '@' . __METHOD__ );
-            dt_write_log( 'Caught exception: ', $e->getMessage(), "\n" );
+            dt_write_log( 'Caught exception: '. $e->getMessage() . "\n" );
+        }
+    }
+
+    /**
+     * Implementation of Template
+     * The template is intended to reduce the HTML needed for repeatable WP admin page framework
+     *
+     * Two Column Implementation
+    $this->template( 'begin' );
+    $this->template( 'right_column' );
+    $this->template( 'end' );
+     *
+     * One Column Implementation
+    $this->template( 'begin' );
+    $this->template( 'end' );
+     *
+     * @param     $section
+     * @param int $columns
+     */
+    public function template( $section, $columns = 2 ) {
+        switch ( $columns ) {
+
+            case '1':
+                switch ( $section ) {
+                    case 'begin':
+                        ?>
+                        <div class="wrap">
+                        <div id="poststuff">
+                        <div id="post-body" class="metabox-holder columns-1">
+                        <div id="post-body-content">
+                        <!-- Main Column -->
+                        <?php
+                        break;
+
+
+                    case 'end':
+                        ?>
+                        </div><!-- postbox-container 1 -->
+                        </div><!-- post-body meta box container -->
+                        </div><!--poststuff end -->
+                        </div><!-- wrap end -->
+                        <?php
+                        break;
+                }
+                break; // end case 1
+
+            case '2':
+                switch ( $section ) {
+                    case 'begin':
+                        ?>
+                        <div class="wrap">
+                        <div id="poststuff">
+                        <div id="post-body" class="metabox-holder columns-2">
+                        <div id="post-body-content">
+                        <!-- Main Column -->
+                        <?php
+                        break;
+
+                case 'right_column':
+                    ?>
+                    <!-- End Main Column -->
+                    </div><!-- end post-body-content -->
+                    <div id="postbox-container-1" class="postbox-container">
+                    <!-- Right Column -->
+                    <?php
+                    break;
+
+                    case 'end':
+                        ?>
+                        </div><!-- postbox-container 1 -->
+                        </div><!-- post-body meta box container -->
+                        </div><!--poststuff end -->
+                        </div><!-- wrap end -->
+                        <?php
+                        break;
+                }
+                break; // end case 2
+        }
+    }
+
+    /**
+     * @param        $section
+     * @param string $title
+     * @param array  $args
+     *                    row_container removes the default containing row
+     *                    col_span sets the number of columns the header should span
+     *                    striped can remove the striped class from the table
+     */
+    public function box( $section, $title = '', $args = [] ) {
+
+        $args = wp_parse_args( $args, [
+            'row_container' => true,
+            'col_span' => 1,
+            'striped' => true,
+        ] );
+
+        switch ( $section ) {
+            case 'top':
+                ?>
+                <!-- Begin Box -->
+                <table class="widefat <?php echo $args['striped'] ? 'striped' : '' ?>">
+                <thead><th colspan="<?php echo esc_attr( $args['col_span'] ) ?>"><?php echo esc_html( $title ) ?></th></thead>
+                <tbody>
+
+                <?php
+                echo $args['row_container'] ? '<tr><td>' : '';
+
+                break;
+            case 'bottom':
+
+                echo $args['row_container'] ? '</tr></td>' : '';
+                ?>
+                </tbody></table><br>
+                <!-- End Box -->
+                <?php
+                break;
         }
     }
 }
@@ -206,7 +366,7 @@ function zume_prayer_slack_async_send()
             $send_to_slack = new Zume_Prayer_Slack_Send();
             $send_to_slack->send();
         } catch ( Exception $e ) {
-            dt_write_log( 'Caught exception: ', $e->getMessage(), "\n" );
+            dt_write_log( 'Caught exception: '. $e->getMessage() . "\n" );
         }
     }
 
@@ -238,7 +398,11 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
             // @codingStandardsIgnoreEnd
 
             // Slack webhook endpoint from Slack settings
-            $slack_endpoint = "https://hooks.slack.com/services/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";
+            $slack_endpoint = get_option( 'zume_prayer_slack' );
+            if ( empty( $slack_endpoint ) ) {
+                dt_write_log( 'Missing slack endpoint. Can not send zume slack notification.');
+                return;
+            }
 
             // Prepare the data / payload to be posted to Slack
             $data = array(
@@ -270,6 +434,52 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
     }
 
     protected function run_action(){}
+}
+
+/**
+ * A simple function to assist with development and non-disruptive debugging.
+ * -----------
+ * -----------
+ * REQUIREMENT:
+ * WP Debug logging must be set to true in the wp-config.php file.
+ * Add these definitions above the "That's all, stop editing! Happy blogging." line in wp-config.php
+ * -----------
+ * define( 'WP_DEBUG', true ); // Enable WP_DEBUG mode
+ * define( 'WP_DEBUG_LOG', true ); // Enable Debug logging to the /wp-content/debug.log file
+ * define( 'WP_DEBUG_DISPLAY', false ); // Disable display of errors and warnings
+ * @ini_set( 'display_errors', 0 );
+ * -----------
+ * -----------
+ * EXAMPLE USAGE:
+ * (string)
+ * write_log('THIS IS THE START OF MY CUSTOM DEBUG');
+ * -----------
+ * (array)
+ * $an_array_of_things = ['an', 'array', 'of', 'things'];
+ * write_log($an_array_of_things);
+ * -----------
+ * (object)
+ * $an_object = new An_Object
+ * write_log($an_object);
+ */
+if ( ! function_exists( 'dt_write_log' ) ) {
+    /**
+     * A function to assist development only.
+     * This function allows you to post a string, array, or object to the WP_DEBUG log.
+     *
+     * @param $log
+     */
+    // @codingStandardsIgnoreLine
+    function dt_write_log( $log )
+    {
+        if ( true === WP_DEBUG ) {
+            if ( is_array( $log ) || is_object( $log ) ) {
+                error_log( print_r( $log, true ) );
+            } else {
+                error_log( $log );
+            }
+        }
+    }
 }
 
 
