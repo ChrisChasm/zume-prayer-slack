@@ -13,7 +13,16 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 require_once('wp-async-request.php');
 
 function zume_prayer_slack() {
-    return Zume_Prayer_Slack::instance();
+    $current_theme = get_option( 'current_theme' );
+    if ( 'Zúme Project' == $current_theme ) {
+        require_once( get_theme_file_path('/functions/geocoding-api.php' ) );
+
+        return Zume_Prayer_Slack::instance();
+    }
+    else {
+        add_action( 'admin_notices', 'zume_not_found' );
+        return new WP_Error( 'current_theme_not_zume', 'Zume Project Theme not active.' );
+    }
 }
 add_action( 'after_setup_theme', 'zume_prayer_slack' );
 
@@ -257,7 +266,7 @@ class Zume_Prayer_Slack
             return '';
         }
 
-        $geocode = disciple_tools_google_geocode_api();
+        $geocode = new Disciple_Tools_Google_Geocode_API();
         if ( $geocode::check_valid_request_result( $ip_raw_location ) ) {
             $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
             $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
@@ -534,6 +543,15 @@ if ( ! function_exists( 'dt_write_log' ) ) {
             }
         }
     }
+}
+
+function zume_not_found()
+{
+    ?>
+    <div class="notice notice-error">
+        <p><?php esc_html_e( "'Zume Prayer Slack' plugin requires 'Zume Project' theme to work. Please activate 'Zume Project' theme or deactivate 'Zume Prayer Slack' plugin." ); ?></p>
+    </div>
+    <?php
 }
 
 
