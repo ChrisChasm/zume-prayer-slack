@@ -153,17 +153,19 @@ class Zume_Prayer_Slack
         if ( ! $initials ) {
             return;
         }
-
         $group = get_user_meta( $user_id, $group_key, true );
         $title = '';
         if ( $group ) {
+            // add title
             $title = $group['group_name'] ?? '';
+            // add location
+            $location = $this->get_group_location( $group['ip_raw_location'] ?? '' );
         }
         try {
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $initials . " created a new group" . ( ! empty( $title ) ? ' called '. $title .'' : ''),
+                    'message'    => $initials . " created a new group" . ( ! empty( $title ) ? ' called '. $title .'' : '') . ( ! empty( $location ) ? "\n (".$location.")" : ''),
                     'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
@@ -222,11 +224,19 @@ class Zume_Prayer_Slack
         if ( ! $initials ) {
             return;
         }
+        $group_members = '';
+        $group = get_user_meta( $owner_id, $zume_group_key, true );
+        if ( $group ) {
+            $count = $group['members'] ?? 0;
+            if ( ! $count ) {
+                $group_members = ' of ' . $count;
+            }
+        }
         try {
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $initials . " is leading a group through session " . $zume_session . " right now!",
+                    'message'    => $initials . " is leading a group". $group_members ." through session " . $zume_session . " right now!",
                     'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
@@ -236,6 +246,26 @@ class Zume_Prayer_Slack
             dt_write_log( '@' . __METHOD__ );
             dt_write_log( 'Caught exception: '. $e->getMessage() . "\n" );
         }
+    }
+
+    public function get_user_location( ) {
+
+    }
+
+    public function get_group_location( $ip_raw_location ) {
+        if ( empty( $ip_raw_location ) ) {
+            return '';
+        }
+
+        $geocode = new Disciple_Tools_Google_Geocode_API();
+        if ( $geocode::check_valid_request_result( $ip_raw_location ) ) {
+            $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
+            $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
+
+            return $admin1 . ( ! empty( $admin1 ) ? ', ' : '' ) . $country;
+        }
+
+        return '';
     }
 
     /**
