@@ -15,7 +15,7 @@ require_once('wp-async-request.php');
 function zume_prayer_slack() {
     return Zume_Prayer_Slack::instance();
 }
-add_action( 'plugins_loaded', 'zume_prayer_slack' );
+add_action( 'after_setup_theme', 'zume_prayer_slack' );
 
 class Zume_Prayer_Slack
 {
