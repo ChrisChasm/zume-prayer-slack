@@ -136,7 +136,7 @@ class Zume_Prayer_Slack
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $initials . ( ! empty( $address ) ? ', from ' . $address . ',' : '' ) . " just joined Zúme" . $location,
+                    'message'    => $initials . ( ! empty( $address ) ? ', from ' . $address . ',' : '' ) . " just joined Zúme!" . $location,
                     'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
@@ -166,7 +166,7 @@ class Zume_Prayer_Slack
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $initials . " created a new group" . ( ! empty( $title ) ? ' called '. $title .'' : '') . $location,
+                    'message'    => $initials . " created a new group" . ( ! empty( $title ) ? ' called '. $title .'' : '') . '.' . $location,
                     'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
@@ -263,7 +263,7 @@ class Zume_Prayer_Slack
             $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
             $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
 
-            return "\n (" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
+            return " (" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
         }
 
         return '';
@@ -279,7 +279,7 @@ class Zume_Prayer_Slack
             $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
             $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
 
-            return "\n (" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
+            return " (" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
         }
 
         return '';
