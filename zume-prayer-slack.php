@@ -166,7 +166,7 @@ class Zume_Prayer_Slack
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
                 [
-                    'message'    => $initials . " created a new group" . ( ! empty( $title ) ? ' called '. $title .'' : '') . ( ! empty( $location ) ? "\n (".$location.")" : ''),
+                    'message'    => $initials . " created a new group" . ( ! empty( $title ) ? ' called '. $title .'' : '') . $location,
                     'channel'    => '',
                     'username'   => '',
                     'icon_emoji' => '',
