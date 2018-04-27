@@ -263,7 +263,7 @@ class Zume_Prayer_Slack
             $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
             $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
 
-            return "\n" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
+            return "\n (" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
         }
 
         return '';
@@ -279,7 +279,7 @@ class Zume_Prayer_Slack
             $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
             $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
 
-            return "\n" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
+            return "\n (" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
         }
 
         return '';
@@ -419,6 +419,16 @@ class Zume_Prayer_Slack
 
         $login_initials = substr( strtoupper( $user->user_login ), 0, 2 );
         return $login_initials; // returns first two letters of login name
+    }
+
+    public function check_if_posted_recently( $user_id ) {
+        // time last 20 minutes
+
+        // check if recent action
+
+        // return false if no duplicate exists
+
+        // return true if duplicate exists
     }
 }
 
