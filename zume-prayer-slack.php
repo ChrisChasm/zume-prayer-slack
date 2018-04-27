@@ -257,7 +257,7 @@ class Zume_Prayer_Slack
             return '';
         }
 
-        $geocode = new Disciple_Tools_Google_Geocode_API();
+        $geocode = disciple_tools_google_geocode_api();
         if ( $geocode::check_valid_request_result( $ip_raw_location ) ) {
             $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
             $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
