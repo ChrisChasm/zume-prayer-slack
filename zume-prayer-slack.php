@@ -15,7 +15,7 @@ require_once('wp-async-request.php');
 function zume_prayer_slack() {
     $current_theme = get_option( 'current_theme' );
     if ( 'Zúme Project' == $current_theme ) {
-        require_once( get_theme_file_path('/functions/geocoding-api.php' ) );
+        require_once( get_theme_file_path('/functions/dt-mapping/geocode-api/ipapi-api.php' ) );
 
         return Zume_Prayer_Slack::instance();
     }
@@ -572,16 +572,17 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
     }
 
     public function get_user_location( $user_id ) {
-        $ip_raw_location = get_user_meta( $user_id, 'zume_raw_location_from_ip', true );
+        $ip_address = get_user_meta( $user_id, 'zume_recent_ip', true );
         if ( empty( $ip_raw_location ) ) {
             return '';
         }
-        $geocode = new Disciple_Tools_Google_Geocode_API();
-        if ( $geocode::check_valid_request_result( $ip_raw_location ) ) {
-            $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
-            $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
+        $geocode = new DT_Ipapi_API();
+        if ( $geocode::check_valid_ip_address( $ip_address ) ) {
+            $result = $geocode::geocode_ip_address( $ip_address, 'full' );
+            $country = $geocode::parse_raw_result( $result, 'country' );
+            $region = $geocode::parse_raw_result( $result, 'region' );
 
-            return " (" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
+            return " (" . $region . ( ! empty( $region ) ? ", " : "" ) . $country . ")";
         }
 
         return '';
@@ -592,12 +593,12 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
             return '';
         }
 
-        $geocode = new Disciple_Tools_Google_Geocode_API();
-        if ( $geocode::check_valid_request_result( $ip_raw_location ) ) {
-            $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
-            $admin1 = $geocode::parse_raw_result( $ip_raw_location, 'admin1' );
+        $geocode = new DT_Ipapi_API();
+        $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
+        $region = $geocode::parse_raw_result( $ip_raw_location, 'region' );
 
-            return " (" . $admin1 . ( ! empty( $admin1 ) ? ", " : "" ) . $country . ")";
+        if ( $country || $region ) {
+            return " (" . $region . ( ! empty( $region ) ? ", " : "" ) . $country . ")";
         }
 
         return '';
@@ -606,32 +607,6 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
     protected function run_action(){}
 }
 
-/**
- * A simple function to assist with development and non-disruptive debugging.
- * -----------
- * -----------
- * REQUIREMENT:
- * WP Debug logging must be set to true in the wp-config.php file.
- * Add these definitions above the "That's all, stop editing! Happy blogging." line in wp-config.php
- * -----------
- * define( 'WP_DEBUG', true ); // Enable WP_DEBUG mode
- * define( 'WP_DEBUG_LOG', true ); // Enable Debug logging to the /wp-content/debug.log file
- * define( 'WP_DEBUG_DISPLAY', false ); // Disable display of errors and warnings
- * @ini_set( 'display_errors', 0 );
- * -----------
- * -----------
- * EXAMPLE USAGE:
- * (string)
- * write_log('THIS IS THE START OF MY CUSTOM DEBUG');
- * -----------
- * (array)
- * $an_array_of_things = ['an', 'array', 'of', 'things'];
- * write_log($an_array_of_things);
- * -----------
- * (object)
- * $an_object = new An_Object
- * write_log($an_object);
- */
 if ( ! function_exists( 'dt_write_log' ) ) {
     /**
      * A function to assist development only.
