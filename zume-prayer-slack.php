@@ -11,6 +11,10 @@
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 require_once('wp-async-request.php');
+if ( ! file_exists( get_theme_root() . '/disciple-tools-theme/dt-mapping/geocode-api/ipapi-api.php' ) ) {
+    add_action( 'admin_notices', 'zume_not_found' );
+    return new WP_Error( 'current_theme_not_zume', 'Zume Project Theme not active.' );
+}
 
 function zume_prayer_slack() {
     $current_theme = get_option( 'current_theme' );
