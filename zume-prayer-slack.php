@@ -15,7 +15,7 @@ require_once('wp-async-request.php');
 function zume_prayer_slack() {
     $current_theme = get_option( 'current_theme' );
     if ( 'Zúme Project' == $current_theme ) {
-        require_once( get_theme_file_path('/functions/dt-mapping/geocode-api/ipapi-api.php' ) );
+        require_once( get_theme_root() . '/disciple-tools-theme/dt-mapping/geocode-api/ipapi-api.php' );
 
         return Zume_Prayer_Slack::instance();
     }
