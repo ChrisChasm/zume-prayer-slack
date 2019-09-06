@@ -90,6 +90,11 @@ class Zume_Prayer_Slack
             update_option('zume_prayer_slack', $hook_url, true );
             update_option('zume_prayer_slack_channel', $channel, true );
         }
+        if ( isset( $_POST['zume_test_slack_nonce'] ) && ! empty( $_POST['zume_test_slack_nonce'] )
+            && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['zume_test_slack_nonce'] ) ), 'zume_test_slack'. get_current_user_id() ) ) {
+
+            $this->hooks_user_register( get_current_user_id() );
+        }
 
         $hook_url = get_option( 'zume_prayer_slack' );
         $channel = get_option( 'zume_prayer_slack_channel' );
@@ -122,14 +127,30 @@ class Zume_Prayer_Slack
         </form>
 
         <?php
-        
+        $this->box( 'bottom' );
+
+        $this->box('top', 'Test Send', ['row_container' => false] );
+        ?>
+        <form method="post" action="">
+            <?php wp_nonce_field( 'zume_test_slack'. get_current_user_id(), 'zume_test_slack_nonce', false, true ) ?>
+            <tr>
+                <td>
+                    <button class="button" type="submit" name="send" value="1" style="float:right">Send</button>
+                </td>
+            </tr>
+        </form>
+        <?php
+
         $this->box( 'bottom' );
         // end metabox
         // begin right column template
         $this->template( 'right_column' );
+
+
         // end columns template
         $this->template( 'end' );
     }
+
 
     public function hooks_user_register( $user_id ) {
         try {
