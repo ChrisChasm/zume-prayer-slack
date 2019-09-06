@@ -11,7 +11,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 require_once('wp-async-request.php');
-if ( ! file_exists( get_theme_root() . '/disciple-tools-theme/dt-mapping/geocode-api/ipapi-api.php' ) ) {
+if ( ! file_exists( get_template_directory() . '/dt-mapping/geocode-api/ipstack-api.php' ) ) {
     add_action( 'admin_notices', 'zume_not_found' );
     return new WP_Error( 'current_theme_not_zume', 'Zume Project Theme not active.' );
 }
@@ -19,7 +19,7 @@ if ( ! file_exists( get_theme_root() . '/disciple-tools-theme/dt-mapping/geocode
 function zume_prayer_slack() {
     $current_theme = get_option( 'current_theme' );
     if ( 'Zúme Project' == $current_theme ) {
-        require_once( get_theme_root() . '/disciple-tools-theme/dt-mapping/geocode-api/ipapi-api.php' );
+        require_once( get_template_directory() . '/dt-mapping/geocode-api/ipstack-api.php' );
 
         return Zume_Prayer_Slack::instance();
     }
@@ -580,11 +580,11 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
         if ( empty( $ip_raw_location ) ) {
             return '';
         }
-        $geocode = new DT_Ipapi_API();
+        $geocode = new DT_Ipstack_API();
         if ( $geocode::check_valid_ip_address( $ip_address ) ) {
             $result = $geocode::geocode_ip_address( $ip_address, 'full' );
-            $country = $geocode::parse_raw_result( $result, 'country' );
-            $region = $geocode::parse_raw_result( $result, 'region' );
+            $country = $geocode::parse_raw_result( $result, 'country_name' );
+            $region = $geocode::parse_raw_result( $result, 'region_name' );
 
             return " (" . $region . ( ! empty( $region ) ? ", " : "" ) . $country . ")";
         }
@@ -597,9 +597,9 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
             return '';
         }
 
-        $geocode = new DT_Ipapi_API();
-        $country = $geocode::parse_raw_result( $ip_raw_location, 'country' );
-        $region = $geocode::parse_raw_result( $ip_raw_location, 'region' );
+        $geocode = new DT_Ipstack_API();
+        $country = $geocode::parse_raw_result( $ip_raw_location, 'country_name' );
+        $region = $geocode::parse_raw_result( $ip_raw_location, 'region_name' );
 
         if ( $country || $region ) {
             return " (" . $region . ( ! empty( $region ) ? ", " : "" ) . $country . ")";
