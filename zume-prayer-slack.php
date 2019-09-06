@@ -10,17 +10,17 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
+/** Requirements */
 require_once('wp-async-request.php');
 if ( ! file_exists( get_template_directory() . '/dt-mapping/geocode-api/ipstack-api.php' ) ) {
     add_action( 'admin_notices', 'zume_not_found' );
     return new WP_Error( 'current_theme_not_zume', 'Zume Project Theme not active.' );
 }
 
+/** Loader */
 function zume_prayer_slack() {
     $current_theme = get_option( 'current_theme' );
     if ( 'Zúme Project' == $current_theme ) {
-        require_once( get_template_directory() . '/dt-mapping/geocode-api/ipstack-api.php' );
-
         return Zume_Prayer_Slack::instance();
     }
     else {
@@ -30,10 +30,12 @@ function zume_prayer_slack() {
 }
 add_action( 'after_setup_theme', 'zume_prayer_slack' );
 
+/** Class */
 class Zume_Prayer_Slack
 {
     private static $_instance = null;
     public $slack_send;
+    public $ipstack;
 
     /**
      * Zume_Prayer_Slack Instance
@@ -48,7 +50,6 @@ class Zume_Prayer_Slack
         if ( is_null( self::$_instance ) ) {
             self::$_instance = new self();
         }
-
         return self::$_instance;
     } // End instance()
 
@@ -60,6 +61,7 @@ class Zume_Prayer_Slack
      */
     public function __construct()
     {
+
         add_action( "admin_menu", [ $this, "register_menu" ] );
 
         // hooks
@@ -81,7 +83,6 @@ class Zume_Prayer_Slack
     public function content() {
         if ( isset( $_POST['zume_prayer_slack_nonce'] ) && ! empty( $_POST['zume_prayer_slack_nonce'] )
             && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['zume_prayer_slack_nonce'] ) ), 'zume_prayer_slack'. get_current_user_id() ) ) {
-            dt_write_log( $_POST );
 
             $hook_url = trim( sanitize_text_field( wp_unslash( $_POST['hook_url'] ) ) );
             $channel = trim( sanitize_text_field( wp_unslash( $_POST['channel'] ) ) );
@@ -121,6 +122,7 @@ class Zume_Prayer_Slack
         </form>
 
         <?php
+        
         $this->box( 'bottom' );
         // end metabox
         // begin right column template
@@ -147,6 +149,7 @@ class Zume_Prayer_Slack
     }
 
     public function hooks_create_group( $user_id, $group_key, $group_meta ) {
+        dt_write_log(__METHOD__);
         try {
             $send_slack = new Zume_Prayer_Slack_Send();
             $send_slack->launch(
@@ -368,6 +371,7 @@ add_action( 'init', 'zume_prayer_slack_async_send' );
 class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
 {
     protected $action = 'prayer_slack';
+    public $ipstack;
 
     protected function prepare_data( $data ) { return $data; }
 
@@ -378,6 +382,8 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
             && sanitize_key( wp_unslash( $_POST[ 'action' ] ) ) == 'dt_async_'.$this->action
             && isset( $_POST[ '_nonce' ] )
             && $this->verify_async_nonce( sanitize_key( wp_unslash( $_POST[ '_nonce' ] ) ) ) ) {
+
+            require_once( get_template_directory() . '/dt-mapping/geocode-api/ipstack-api.php' );
 
             // Parse post data and build variables
             $hook_name = ( isset( $_POST[0]['hook_name'] ) && ! empty( $_POST[0]['hook_name'] ) ) ? $_POST[0]['hook_name'] : die() ;
@@ -576,15 +582,19 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
     }
 
     public function get_user_location( $user_id ) {
-        $ip_address = get_user_meta( $user_id, 'zume_recent_ip', true );
-        if ( empty( $ip_raw_location ) ) {
-            return '';
-        }
         $geocode = new DT_Ipstack_API();
+        $ip_address = get_user_meta( $user_id, 'zume_recent_ip', true );
+        if ( empty( $ip_address ) ) {
+            $ip_address = $geocode::get_real_ip_address();
+        }
+
         if ( $geocode::check_valid_ip_address( $ip_address ) ) {
-            $result = $geocode::geocode_ip_address( $ip_address, 'full' );
-            $country = $geocode::parse_raw_result( $result, 'country_name' );
-            $region = $geocode::parse_raw_result( $result, 'region_name' );
+            $ip_raw_location = $geocode::geocode_ip_address( $ip_address );
+            if ( empty( $ip_raw_location ) ) {
+                $ip_raw_location = $this->get_current_user_ip_location();
+            }
+            $country = $geocode::parse_raw_result( $ip_raw_location, 'country_name' );
+            $region = $geocode::parse_raw_result( $ip_raw_location, 'region_name' );
 
             return " (" . $region . ( ! empty( $region ) ? ", " : "" ) . $country . ")";
         }
@@ -594,7 +604,7 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
 
     public function get_group_location( $ip_raw_location ) {
         if ( empty( $ip_raw_location ) ) {
-            return '';
+            $ip_raw_location = $this->get_current_user_ip_location();
         }
 
         $geocode = new DT_Ipstack_API();
@@ -608,8 +618,16 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
         return '';
     }
 
+    public function get_current_user_ip_location() {
+        if ( class_exists( 'DT_Ipstack_API') ) {
+            return DT_Ipstack_API::geocode_current_visitor();
+        }
+        return false;
+    }
+
     protected function run_action(){}
 }
+
 
 if ( ! function_exists( 'dt_write_log' ) ) {
     /**
