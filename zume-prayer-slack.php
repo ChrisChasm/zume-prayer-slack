@@ -14,18 +14,18 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 require_once('wp-async-request.php');
 if ( ! file_exists( get_template_directory() . '/dt-mapping/geocode-api/ipstack-api.php' ) ) {
     add_action( 'admin_notices', 'zume_not_found' );
-    return new WP_Error( 'current_theme_not_zume', 'Zume Project Theme not active.' );
+    return new WP_Error( 'current_theme_not_zume', 'Zume Training Theme not active.' );
 }
 
 /** Loader */
 function zume_prayer_slack() {
     $current_theme = get_option( 'current_theme' );
-    if ( 'Zúme Project' == $current_theme ) {
+    if ( 'Zúme Training' == $current_theme ) {
         return Zume_Prayer_Slack::instance();
     }
     else {
         add_action( 'admin_notices', 'zume_not_found' );
-        return new WP_Error( 'current_theme_not_zume', 'Zume Project Theme not active.' );
+        return new WP_Error( 'current_theme_not_zume', 'Zume Training Theme not active.' );
     }
 }
 add_action( 'after_setup_theme', 'zume_prayer_slack' );
@@ -674,7 +674,7 @@ function zume_not_found()
 {
     ?>
     <div class="notice notice-error">
-        <p><?php esc_html_e( "'Zume Prayer Slack' plugin requires 'Zume Project' theme to work. Please activate 'Zume Project' theme or deactivate 'Zume Prayer Slack' plugin." ); ?></p>
+        <p><?php esc_html_e( "'Zume Prayer Slack' plugin requires 'Zume Training' theme to work. Please activate 'Zume Training' theme or deactivate 'Zume Prayer Slack' plugin." ); ?></p>
     </div>
     <?php
 }
