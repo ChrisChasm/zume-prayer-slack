@@ -5,7 +5,7 @@
 * Author: Chasm Solutions
 * Author URI: https://chasm.solutions
 * Description: A support plugins to send Slack notifications to Zume Prayer Slack for key site events.
-* Version: 1.0
+* Version: 1.1
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
@@ -19,8 +19,8 @@ if ( ! file_exists( get_template_directory() . '/dt-mapping/geocode-api/ipstack-
 
 /** Loader */
 function zume_prayer_slack() {
-    $current_theme = get_option( 'current_theme' );
-    if ( 'Zúme Training' == $current_theme ) {
+    $current_theme = get_option( 'stylesheet' );
+    if ( 'zume-training' == $current_theme ) {
         return Zume_Prayer_Slack::instance();
     }
     else {
