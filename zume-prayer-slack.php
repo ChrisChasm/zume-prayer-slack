@@ -576,6 +576,16 @@ class Zume_Prayer_Slack_Send extends Disciple_Tools_Async_Task
                 )
             );
 
+            Zume_Logging::insert(
+                array(
+                    'user_id'  => $data['user_id'] ?? 0,
+                    'group_id' => $group_key ?? '',
+                    'page'     => 'prayer',
+                    'action'   => 'prayer',
+                    'meta'     => $message,
+                )
+            );
+
 //            dt_write_log( $posting_to_slack );
 
         } // end if check
